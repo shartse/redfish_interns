@@ -3,6 +3,8 @@ import {Gradient} from '../st-api/Util/Gradient';
 import {Raster} from './Util';
 import {StripeScan} from './StripeScan';
 
+
+
 /* Computes a projector-camera correspondence and can paint it on a canvas */
 export class Correspondence {
     constructor() {
@@ -144,39 +146,10 @@ export class Correspondence {
                     x * patchWidth + patchWidth,
                     y * patchHeight + patchHeight
                 );
-
                 
                 if (Math.abs(patch.x) + Math.abs(patch.y) > avgDiff) {
-                    //console.log("Drawing a line");
-                    //Draw a line between the current location and the previous location of the pixel
-                    
-                    ctx.beginPath();
-                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    ctx.lineTo(x * patchWidth, y * patchHeight);
-
-                    ctx.strokeStyle = "white";
-                    ctx.closePath();
-                    ctx.stroke();
-
-                    
-                        /*
-                    ctx.beginPath();
-                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    
-                    ctx.lineTo(- (x * patchWidth) * 0.25, y * patchHeight);
-                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    ctx.lineTo(x * patchWidth, -(y * patchHeight) * 0.25);
-                    */
-                    /*
-                    ctx.lineTo(5*Math.cos(30),5*Math.sin(30));
-                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    ctx.lineTo(5*Math.cos(330),5*Math.sin(330));
-                    ctx.strokeStyle = "white";
-                    ctx.closePath();
-                    ctx.stroke();
-                    */
-                    //Fill all pixels with white
-                    /*
+                   
+                   //Fill patches that have a larger than average diff
                     ctx.fillStyle = 'white';
                     ctx.fillRect(
                     x * patchWidth,
@@ -184,12 +157,32 @@ export class Correspondence {
                     x * patchWidth + patchWidth,
                     y * patchHeight + patchHeight
                     );
-                    */
-                
+
+                    //Draw a line between the current and previous location of pixels with a large enough diff 
+                    ctx.beginPath();
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.lineTo(x * patchWidth, y * patchHeight);
+                    ctx.strokeStyle = "white";
+                    ctx.closePath();
+                    ctx.stroke();
+
                 }
                 
-               // ctx.drawArrow(x * patchWidth, y * patchHeight , patch.x ,patch.y);
             }
+        }
+        console.log("before dector");
+        var detector = new AR.Detector();
+        console.log("Made a dector");
+        
+        
+        
+        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        console.log("made imageData");
+
+        var markers = detector.detect(imageData);
+        console.log(markers.length);
+        for (var i = 0; i < markers.length; i++ ) {
+            console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
         }
     }
 
@@ -229,5 +222,11 @@ export class Correspondence {
                 callback();
             }
         });
+    }
+
+
+    /*Checks for fiducial codes */
+    findFiducials(screenCanvas) {
+
     }
 }
