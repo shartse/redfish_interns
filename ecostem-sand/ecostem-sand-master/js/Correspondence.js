@@ -151,15 +151,18 @@ export class Correspondence {
                     //Draw a line between the current location and the previous location of the pixel
                     
                     ctx.beginPath();
-                    ctx.moveTo(x * patchWidth, y * patchHeight);
-                    ctx.lineTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.lineTo(x * patchWidth, y * patchHeight);
                     ctx.strokeStyle = "white";
                     ctx.closePath();
                     ctx.stroke();
+
                     ctx.beginPath();
-                    ctx.moveTo(x * patchWidth, y * patchHeight);
-                    ctx.lineTo(100,75);
-                    ctx.lineTo(100,25);
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.lineTo(- (x * patchWidth) * 0.25, y * patchHeight);
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.lineTo(x * patchWidth, -(y * patchHeight) * 0.25);
+                    ctx.fillStyle = 'white';
                     ctx.fill();
                     
                     //Fill all pixels with white
