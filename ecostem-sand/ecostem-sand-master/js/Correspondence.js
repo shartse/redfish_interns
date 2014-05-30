@@ -157,9 +157,10 @@ export class Correspondence {
                     ctx.closePath();
                     ctx.stroke();
                     ctx.beginPath();
-                    ctx.moveTo(x * patchWidth, y * patchHeight);
-                    ctx.lineTo(100,75);
-                    ctx.lineTo(100,25);
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctx.lineTo(30*Math.cos(30),30*Math.sin(30));
+                    ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
+                    ctxlineTo(30*Math.cos(330),30*Math.sin(330));
                     ctx.fill();
                     
                     //Fill all pixels with white
