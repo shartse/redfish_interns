@@ -149,7 +149,9 @@ export class Correspondence {
                 if (Math.abs(patch.x) + Math.abs(patch.y) > avgDiff) {
                     //console.log("Drawing a line");
                     //Draw a line between the current location and the previous location of the pixel
-                    
+                    Math.radians = function(deg){
+                    return deg * (Math.PI/180);
+                    }
                     ctx.beginPath();
                     ctx.moveTo(x * patchWidth, y * patchHeight);
                     ctx.lineTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
@@ -158,9 +160,9 @@ export class Correspondence {
                     ctx.stroke();
                     ctx.beginPath();
                     ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    ctx.lineTo(30*Math.cos(30),30*Math.sin(30));
+                    ctx.lineTo(5*Math.radians(30)),5*Math.sin(Math.radians(330));
                     ctx.moveTo((x + patch.x) * patchWidth, (y + patch.y) * patchHeight);
-                    ctxlineTo(30*Math.cos(330),30*Math.sin(330));
+                    ctxlineTo(5*Math.cos(Math.radians(330)),5*Math.sin(Math.radians(330));
                     ctx.fill();
                     
                     //Fill all pixels with white
