@@ -2,6 +2,7 @@
 import {Gradient} from '../st-api/Util/Gradient';
 import {Raster} from './Util';
 import {StripeScan} from './StripeScan';
+import {ImageLoader} from './Util';
 
 
 
@@ -106,6 +107,39 @@ export class Correspondence {
         }
     }
 
+
+    /* Grab an image from the camera server and invoke the callback on it */
+    grabCameraImage(callback) {
+        /* Add a random element to the url to prevent the browser from
+           returning a cached image. */
+        var server = "http://192.168.1.133:3474/shot.jpg";
+        var imageLoader = new ImageLoader();
+        console.log("server url: " + server)
+        var serverUrl = server  + '?x=' + Math.random();
+        setTimeout(() => imageLoader.loadEvent(serverUrl, (img) => this.invoke(callback, img)), 200);
+    }
+
+
+    /*Checks for fiducial codes */
+    findMarkers(canvas) {
+        console.log("before dector");
+        var server = "http://192.168.1.133:3474/shot.jpg";
+        var imageLoader = new ImageLoader();
+        console.log("server url: " + server)
+        var serverUrl = server  + '?x=' + Math.random();
+        imageLoader.load(serverUrl, (img) =>  { 
+            var detector = new AR.Detector();
+            var markers = detector.detect(img.getImageData);
+            console.log(markers.length);
+            for (var i = 0; i < markers.length; i++ ) {
+                console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
+            }
+        });
+       
+       
+    }
+
+
     /* Paint the differences onto a canvas. */
     paintDiff(canvas) {
         var colors = Gradient.gradient('#3d5a99', '#b03333', 30);
@@ -170,20 +204,7 @@ export class Correspondence {
                 
             }
         }
-        console.log("before dector");
-        var detector = new AR.Detector();
-        console.log("Made a dector");
-        
-        
-        
-        var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-        console.log("made imageData");
-
-        var markers = detector.detect(imageData);
-        console.log(markers.length);
-        for (var i = 0; i < markers.length; i++ ) {
-            console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
-        }
+        this.findMarkers(canvas);
     }
 
     /* Invokes a scan. The stripe frames will be painted in screenCanvas,
@@ -225,8 +246,5 @@ export class Correspondence {
     }
 
 
-    /*Checks for fiducial codes */
-    findFiducials(screenCanvas) {
-
-    }
+    
 }
