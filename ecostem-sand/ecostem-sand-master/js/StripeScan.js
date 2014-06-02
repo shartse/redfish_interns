@@ -78,7 +78,7 @@ export class StripeScan {
     constructor() {
         window.ss = this;
 
-        this.server = "http://192.168.1.133:3474/shot.jpg";
+        this.server = "http://192.168.1.147:8080/shot.jpg";
         console.log("server: " + this.serverUrl);
         this.imageLoader = new ImageLoader();
 

@@ -9,6 +9,7 @@ import {ImageLoader} from './Util';
 /* Computes a projector-camera correspondence and can paint it on a canvas */
 export class Correspondence {
     constructor() {
+
         this.stripeScan = new StripeScan();
         /* All the data will be 128x128 in size. This is in tight inter-dependence
            with the fact that StripeScan will project 7 frames (meaning 128 stripes)
@@ -24,6 +25,7 @@ export class Correspondence {
 
     /* Perform a "before" scan */
     flatScan(screenCanvas, callback) {
+        this.findMarkers(screenCanvas);
         this.doScan(screenCanvas, this.flatData.data, callback);
     }
 
@@ -31,7 +33,6 @@ export class Correspondence {
        object has been introduced into the projected frame. */
     moundScan(screenCanvas, callback) {
         this.doScan(screenCanvas, this.moundData.data, () => {
-
             /* Just paint and show the canvas for now.
                TODO: invoke callback instead. */
             this.doDiff();
@@ -108,33 +109,31 @@ export class Correspondence {
     }
 
 
-    /* Grab an image from the camera server and invoke the callback on it */
-    grabCameraImage(callback) {
-        /* Add a random element to the url to prevent the browser from
-           returning a cached image. */
-        var server = "http://192.168.1.133:3474/shot.jpg";
-        var imageLoader = new ImageLoader();
-        console.log("server url: " + server)
-        var serverUrl = server  + '?x=' + Math.random();
-        setTimeout(() => imageLoader.loadEvent(serverUrl, (img) => this.invoke(callback, img)), 200);
-    }
+
 
 
     /*Checks for fiducial codes */
     findMarkers(canvas) {
-        console.log("before dector");
-        var server = "http://192.168.1.133:3474/shot.jpg";
+        //var server = "http://192.168.1.133:3474/shot.jpg";
+        var server = "http://192.168.1.147:8080/shot.jpg";
         var imageLoader = new ImageLoader();
-        console.log("server url: " + server)
         var serverUrl = server  + '?x=' + Math.random();
-        imageLoader.load(serverUrl, (img) =>  { 
-            var detector = new AR.Detector();
-            var markers = detector.detect(img.getImageData);
-            console.log(markers.length);
-            for (var i = 0; i < markers.length; i++ ) {
-                console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
-            }
-        });
+
+       
+            
+        var detector = new AR.Detector();
+        
+        window.location = serverUrl;
+        var canvas = document.getElementById("canvas");
+        var context = canvas.getContext("2d");
+        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+        var markers = detector.detect(imageData);
+        console.log(markers.length);
+        for (var i = 0; i < markers.length; i++ ) {
+            console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
+        }
+        
        
        
     }
@@ -204,7 +203,7 @@ export class Correspondence {
                 
             }
         }
-        this.findMarkers(canvas);
+        
     }
 
     /* Invokes a scan. The stripe frames will be painted in screenCanvas,
