@@ -11,6 +11,7 @@ export class Correspondence {
     constructor() {
 
         this.stripeScan = new StripeScan();
+        this.imageLoader = new ImageLoader();
         /* All the data will be 128x128 in size. This is in tight inter-dependence
            with the fact that StripeScan will project 7 frames (meaning 128 stripes)
            on the last frame.
@@ -25,7 +26,7 @@ export class Correspondence {
 
     /* Perform a "before" scan */
     flatScan(screenCanvas, callback) {
-        this.findMarkers(screenCanvas);
+        this.findMarkers();
         this.doScan(screenCanvas, this.flatData.data, callback);
     }
 
@@ -109,33 +110,49 @@ export class Correspondence {
     }
 
 
-
+   
 
 
     /*Checks for fiducial codes */
-    findMarkers(canvas) {
-        //var server = "http://192.168.1.133:3474/shot.jpg";
-        var server = "http://192.168.1.147:8080/shot.jpg";
-        var imageLoader = new ImageLoader();
-        var serverUrl = server  + '?x=' + Math.random();
-
-       
-            
+    findMarkers() {
+        console.log("Calling find markers");        
         var detector = new AR.Detector();
+        console.log("Made a detector");
         
-        window.location = serverUrl;
-        var canvas = document.getElementById("canvas");
-        var context = canvas.getContext("2d");
-        var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        this.grabCameraImage((img) => {
+            return console.log("Image loaded");
+        });
 
-        var markers = detector.detect(imageData);
-        console.log(markers.length);
-        for (var i = 0; i < markers.length; i++ ) {
-            console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
-        }
-        
+        /*
+        this.grabCameraImage((img) => {
+            
+            /*
+            console.log("Image loaded");
+
+            document.createElement("canvas");
+            var context = canvas.getContext('2d');
+            context.drawImage(img, 100, 100);
+            
+            var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+
+            var markers = detector.detect(imageData);
+            console.log("Number of markers: " + markers.length);
+            for (var i = 0; i < markers.length; i++ ) {
+                console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
+            }
+            
+        });
+*/
+    
        
-       
+    }
+
+    grabCameraImage(callback) {
+        /* Add a random element to the url to prevent the browser from
+           returning a cached image. */
+        this.server = "http://192.168.1.147:8080/shot.jpg";
+        var serverUrl = this.server  + '?x=' + Math.random();
+        setTimeout(() => this.imageLoader.load(serverUrl, (img) => this.invoke(callback, img)), 200);
     }
 
 
