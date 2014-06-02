@@ -110,50 +110,68 @@ export class Correspondence {
     }
 
 
-   
+
 
 
     /*Checks for fiducial codes */
     findMarkers() {
-        console.log("Calling find markers");        
-        var detector = new AR.Detector();
-        console.log("Made a detector");
-        
-        this.grabCameraImage((img) => {
-            return console.log("Image loaded");
-        });
+        console.log("Calling find markers");
+        var imageURL =  "http://192.168.1.147:8080/shot.jpg"  + '?x=' + Math.random();
+        var img = new Image();
+    
+        img.onload = function(){
+            console.log('image loaded')
+            var can = document.createElement('canvas')
+            can.width = this.width
+            can.height = this.height
+            var ctx = can.getContext('2d')
+            ctx.drawImage(this,0,0)
+           // document.body.appendChild(can)
+            var imgdata = ctx.getImageData(0,0,can.width, can.height)
 
-        /*
-        this.grabCameraImage((img) => {
-            
-            /*
-            console.log("Image loaded");
-
-            document.createElement("canvas");
-            var context = canvas.getContext('2d');
-            context.drawImage(img, 100, 100);
-            
-            var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-
-            var markers = detector.detect(imageData);
+            var detector = new AR.Detector();
+            var markers = detector.detect(imgdata);
             console.log("Number of markers: " + markers.length);
             for (var i = 0; i < markers.length; i++ ) {
-                console.log("id: " + markers[i].id + ", coordinates: " + markers[i].coordinates);
+                console.log("id: " + markers[i].id );
+
+                var posit = new POS.Posit(20, can.width);
+
+               //Scale the corner locations to the canvas size
+                var corners = markers[i].corners;
+
+                ctx.strokeStyle = "red";
+                ctx.beginPath();
+                
+                for (var j = 0; j !== corners.length; ++ j){
+                  corner = corners[j];
+                  ctx.moveTo(corner.x, corner.y);
+                  corner = corners[(j + 1) % corners.length];
+                  ctx.lineTo(corner.x, corner.y);
+                }
+
+                ctx.stroke();
+                ctx.closePath();
+
+                for (var i = 0; i < corners.length; ++ i){
+                  var corner = corners[i];
+                  console.log("corner: " + corner.x + " " + corner.y);
+                  corner.x = corner.x - (can.width / 2);
+                  corner.y = (can.height / 2) - corner.y;
+                }
             }
             
-        });
-*/
+        }
     
-       
+    img.onerror = function(){
+        console.warn('error loading image')
+    }
+    img.crossOrigin="anonymous";
+    // set the source of the image
+    img.src = imageURL
     }
 
-    grabCameraImage(callback) {
-        /* Add a random element to the url to prevent the browser from
-           returning a cached image. */
-        this.server = "http://192.168.1.147:8080/shot.jpg";
-        var serverUrl = this.server  + '?x=' + Math.random();
-        setTimeout(() => this.imageLoader.load(serverUrl, (img) => this.invoke(callback, img)), 200);
-    }
+   
 
 
     /* Paint the differences onto a canvas. */
@@ -220,6 +238,7 @@ export class Correspondence {
                 
             }
         }
+        this.findMarkers();
         
     }
 
