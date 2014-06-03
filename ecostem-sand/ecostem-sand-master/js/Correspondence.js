@@ -22,12 +22,18 @@ export class Correspondence {
         this.flatData = new Raster(this.dataSize, this.dataSize, {x:0, y:0});
         this.moundData = new Raster(this.dataSize, this.dataSize, {x:0, y:0});
         this.diffData = new Raster(this.dataSize, this.dataSize, {x:0, y:0});
+        
     }
 
     /* Perform a "before" scan */
     flatScan(screenCanvas, callback) {
-        this.findMarkers();
-        this.doScan(screenCanvas, this.flatData.data, callback);
+        //this.doScan(screenCanvas, this.flatData.data, callback);
+        //var screenCanvas = document.getElementById("canvas");
+        this.pixelData = new Raster(screenCanvas.width, screenCanvas.length, {x:0, y:0});
+        
+        this.doPixelScan(screenCanvas, this.pixelData.data, callback);
+        console.log(this.pixelData.data);
+        this.findMarkers(screenCanvas);
     }
 
     /* Perform an "after" scan -- after say, the sand has changed, or a new
@@ -109,16 +115,54 @@ export class Correspondence {
         }
     }
 
+    /* Outlines the boundary of the code */
+    drawOutline(screenCanvas, marker) {
+        ctx = screenCanvas.getContext('2d');
+        ctx.strokeStyle = "red";
+        ctx.beginPath();
+        
+        for (var j = 0; j !== corners.length; ++ j){
+          corner = corners[j];
+          ctx.moveTo(corner.x, corner.y);
+          corner = corners[(j + 1) % corners.length];
+          ctx.lineTo(corner.x, corner.y);
+        }
 
+        ctx.stroke();
+        ctx.closePath();
+/*
+        ctx.strokeStyle = "green";
+        ctx.beginPath();
+        
+        for (var j = 0; j !== corners.length; ++ j){
+          corner = corners[j];
+          var cell = findIndex(corner.x, corner.y);
+          while (cell === null) {
+            cell = findIndex(corner.x + 1, corner.y + 1);
+          }
+          ctx.moveTo(cell.x, cell.y);
+          
+          corner = corners[(j + 1) % corners.length];
+          cell = findIndex(corner.x, corner.y);
+          while (cell === null) {
+            cell = findIndex(corner.x + 1, corner.y + 1);
+          } 
+          ctx.lineTo(corner.x, corner.y);
+          
+         
+        }
 
+        ctx.stroke();
+        ctx.closePath();
+        */
+    }
 
-
+    
     /*Checks for fiducial codes */
-    findMarkers() {
-        console.log("Calling find markers");
+    findMarkers(screenCanvas) {
+        //Opens the camera image and moves it into the canvas
         var imageURL =  "http://192.168.1.147:8080/shot.jpg"  + '?x=' + Math.random();
         var img = new Image();
-    
         img.onload = function(){
             console.log('image loaded')
             var can = document.createElement('canvas')
@@ -126,25 +170,23 @@ export class Correspondence {
             can.height = this.height
             var ctx = can.getContext('2d')
             ctx.drawImage(this,0,0)
-           // document.body.appendChild(can)
-            var imgdata = ctx.getImageData(0,0,can.width, can.height)
+            //document.body.appendChild(can)
 
+            //Gets the image data from the canvas for the image size
+            var imgdata = ctx.getImageData(0,0,can.width, can.height)
+            //Detects any codes within the canvas
             var detector = new AR.Detector();
             var markers = detector.detect(imgdata);
-            console.log("Number of markers: " + markers.length);
+            
             for (var i = 0; i < markers.length; i++ ) {
-                console.log("id: " + markers[i].id );
-
-                var posit = new POS.Posit(20, can.width);
-
-               //Scale the corner locations to the canvas size
+                //Draws the outline of the code on the main screen canvas
                 var corners = markers[i].corners;
-
+                ctx = screenCanvas.getContext('2d');
                 ctx.strokeStyle = "red";
                 ctx.beginPath();
                 
                 for (var j = 0; j !== corners.length; ++ j){
-                  corner = corners[j];
+                  var corner = corners[j];
                   ctx.moveTo(corner.x, corner.y);
                   corner = corners[(j + 1) % corners.length];
                   ctx.lineTo(corner.x, corner.y);
@@ -153,22 +195,34 @@ export class Correspondence {
                 ctx.stroke();
                 ctx.closePath();
 
-                for (var i = 0; i < corners.length; ++ i){
-                  var corner = corners[i];
-                  console.log("corner: " + corner.x + " " + corner.y);
-                  corner.x = corner.x - (can.width / 2);
-                  corner.y = (can.height / 2) - corner.y;
+                //transforms it into projector space
+
+                ctx.strokeStyle = "green";
+                ctx.beginPath();
+
+                var patchWidth = canvas.width / this.dataSize;
+                var patchHeight = canvas.height / this.dataSize;
+                
+                for (var j = 0; j !== corners.length; ++ j){
+                  var corner = corners[j];
+                  var pixel = this.pixelData[corner.x,corner.y];
+                  ctx.moveTo(pixel.x * patchWidth, pixel.y * patchHeight);
+                  corner = corners[(j + 1) % corners.length];
+                  ctx.lineTo(pixel.x * patchWidth, pixel.y * patchHeight);
                 }
+
+                ctx.stroke();
+                ctx.closePath();
             }
             
         }
     
-    img.onerror = function(){
+        img.onerror = function(){
         console.warn('error loading image')
     }
-    img.crossOrigin="anonymous";
+        img.crossOrigin="anonymous";
     // set the source of the image
-    img.src = imageURL
+        img.src = imageURL
     }
 
    
@@ -238,7 +292,8 @@ export class Correspondence {
                 
             }
         }
-        this.findMarkers();
+        this.findMarkers(canvas);
+
         
     }
 
@@ -280,6 +335,44 @@ export class Correspondence {
         });
     }
 
+
+/* Invokes a scan. The stripe frames will be painted in screenCanvas,
+       and 'raster' will be populated with {x,y} values, where x is the
+       camera x for that raster cell, and y is its camera y. */
+    doPixelScan(screenCanvas, raster, callback) {
+        this.stripeScan.scan(screenCanvas, (canvas) => {
+            var ctx = canvas.getContext('2d'),
+                pixels = ctx.getImageData(0, 0, canvas.width, canvas.height).data;
+
+            var sctx = screenCanvas.getContext('2d');
+            sctx.drawImage(canvas, 0, 0);
+
+            for (var i = 0; i < canvas.width; ++i) {
+                for (var j = 0; j < canvas.height; ++j) {
+                    var idx = (j * canvas.width + i) * 4;
+
+                    /* If opacity is negative, ignore this pixel. */
+                    if (pixels[idx+3]) {
+                        /* projector x-value is in the red channel */
+                        var x = pixels[idx];
+                        /* projector y-value is in the blue channel */
+                        var y = pixels[idx+2];
+                        /* Store the camera pixel (x,y) in the raster cell. This
+                           is super dumb right now. There will be many cam pixels
+                           with the same projector (x,y). Currently, the last
+                           pixel in the iteration wins.
+
+                           TODO: We need to do something much smarter here. */
+                        raster[i][j] = {x:x, y:y};
+                    }
+                }
+            }
+
+            if (typeof callback === 'function') {
+                callback();
+            }
+        });
+    }
 
     
 }
